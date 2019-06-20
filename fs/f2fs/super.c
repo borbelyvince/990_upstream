@@ -3128,11 +3128,9 @@ static int read_raw_super_block(struct f2fs_sb_info *sbi,
 		/* sanity checking of raw super */
 		err = sanity_check_raw_super(sbi, bh);
 		if (err) {
-			f2fs_msg(sb, KERN_ERR,
-				"Can't find valid F2FS filesystem in %dth superblock",
-				block + 1);
-			if (verbose)
-				print_bh(sb, bh, 0, sb->s_blocksize);
+			f2fs_err(sbi, "Can't find valid F2FS filesystem in %dth superblock",
+				 block + 1);
+			err = -EFSCORRUPTED;
 			brelse(bh);
 			continue;
 		}
