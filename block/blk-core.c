@@ -4456,6 +4456,8 @@ int __init blk_dev_init(void)
 #if !defined(CONFIG_SAMSUNG_PRODUCT_SHIP)
 	sio_debugfs_init();
 #endif
+	if (bio_crypt_ctx_init() < 0)
+		panic("Failed to allocate mem for bio crypt ctxs\n");
 
 	return 0;
 }
