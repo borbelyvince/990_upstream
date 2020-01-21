@@ -808,6 +808,7 @@ struct ufs_hba {
 	const struct ufs_hba_variant_ops *vops;
 	void *priv;
 	const struct ufs_hba_crypto_variant_ops *crypto_vops;
+	size_t sg_entry_size;
 	unsigned int irq;
 	bool is_irq_enabled;
 
