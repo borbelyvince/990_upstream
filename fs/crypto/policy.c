@@ -163,7 +163,14 @@ static int fscrypt_new_context_from_policy(union fscrypt_context *ctx_u,
 		       policy->master_key_descriptor,
 		       sizeof(ctx->master_key_descriptor));
 		get_random_bytes(ctx->nonce, sizeof(ctx->nonce));
+#if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
+		BUILD_BUG_ON((sizeof(*ctx) - sizeof(ctx->knox_flags))
+				!= offsetof(struct fscrypt_context_v1, knox_flags));
+		ctx->knox_flags = 0;
+		return offsetof(struct fscrypt_context_v1, knox_flags);
+#else
 		return sizeof(*ctx);
+#endif
 	}
 	case FSCRYPT_POLICY_V2: {
 		const struct fscrypt_policy_v2 *policy = &policy_u->v2;
@@ -179,7 +186,14 @@ static int fscrypt_new_context_from_policy(union fscrypt_context *ctx_u,
 		       policy->master_key_identifier,
 		       sizeof(ctx->master_key_identifier));
 		get_random_bytes(ctx->nonce, sizeof(ctx->nonce));
+#if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
+		BUILD_BUG_ON((sizeof(*ctx) - sizeof(ctx->knox_flags))
+				!= offsetof(struct fscrypt_context_v2, knox_flags));
+		ctx->knox_flags = 0;
+		return offsetof(struct fscrypt_context_v2, knox_flags);
+#else
 		return sizeof(*ctx);
+#endif
 	}
 	}
 	BUG();
@@ -264,6 +278,25 @@ static int fscrypt_get_policy(struct inode *inode, union fscrypt_policy *policy)
 	if (ret < 0)
 		return (ret == -ERANGE) ? -EINVAL : ret;
 
+#if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
+	switch (ctx.version) {
+	case FSCRYPT_CONTEXT_V1: {
+		if (ret == offsetof(struct fscrypt_context_v1, knox_flags)) {
+			ctx.v1.knox_flags = 0;
+			ret = sizeof(ctx.v1);
+		}
+		break;
+	}
+	case FSCRYPT_CONTEXT_V2: {
+		if (ret == offsetof(struct fscrypt_context_v2, knox_flags)) {
+			ctx.v2.knox_flags = 0;
+			ret = sizeof(ctx.v2);
+		}
+		break;
+	}
+	}
+#endif
+
 	return fscrypt_policy_from_context(policy, &ctx, ret);
 }
 
@@ -303,17 +336,6 @@ static int set_encryption_policy(struct inode *inode,
 		WARN_ON(1);
 		return -EINVAL;
 	}
-	
-#if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
-	BUILD_BUG_ON((sizeof(ctx) - sizeof(ctx.knox_flags))
-			!= offsetof(struct fscrypt_context, knox_flags));
-	ctx.knox_flags = 0;
-	return inode->i_sb->s_cop->set_context(
-			inode, &ctx, offsetof(struct fscrypt_context, knox_flags), NULL);
-#else
-	ctxsize = fscrypt_new_context_from_policy(&ctx, policy);
-	return inode->i_sb->s_cop->set_context(inode, &ctx, ctxsize, NULL);
-#endif
 }
 
 int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
@@ -358,12 +380,6 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	inode_lock(inode);
 
 	ret = fscrypt_get_policy(inode, &existing_policy);
-#if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
-	if (ret == offsetof(struct fscrypt_context, knox_flags)) {
-		ctx.knox_flags = 0;
-		ret = sizeof(ctx);
-	}
-#endif
 	if (ret == -ENODATA) {
 		if (!S_ISDIR(inode->i_mode))
 			ret = -ENOTDIR;
@@ -540,10 +556,6 @@ int fscrypt_inherit_context(struct inode *parent, struct inode *child,
 
 	BUILD_BUG_ON(sizeof(ctx) != FSCRYPT_SET_CONTEXT_MAX_SIZE);
 
-#if defined(CONFIG_DDAR) || defined(CONFIG_FSCRYPT_SDP)
-	ctx.knox_flags = 0;
-#endif
-
 #ifdef CONFIG_DDAR
 	res = dd_test_and_inherit_context(&ctx, parent, child, ci, fs_data);
 	if (res) {
@@ -562,16 +574,20 @@ int fscrypt_inherit_context(struct inode *parent, struct inode *child,
 #endif
 
 #if defined(CONFIG_FSCRYPT_SDP) || defined(CONFIG_DDAR)
-	if (ctx.knox_flags != 0) {
-		res = parent->i_sb->s_cop->set_context(child, &ctx,
-				ctxsize, fs_data);
-	} else {
-		res = parent->i_sb->s_cop->set_context(child, &ctx,
-				offsetof(struct fscrypt_context, knox_flags), fs_data);
+	switch (ctx.version) {
+	case FSCRYPT_CONTEXT_V1: {
+		if (ctx.v1.knox_flags != 0)
+			ctxsize = sizeof(ctx.v1);
+		break;
 	}
-#else
-	res = parent->i_sb->s_cop->set_context(child, &ctx, ctxsize, fs_data);
+	case FSCRYPT_CONTEXT_V2: {
+		if (ctx.v2.knox_flags != 0)
+			ctxsize = sizeof(ctx.v2);
+		break;
+	}
+	}
 #endif
+	res = parent->i_sb->s_cop->set_context(child, &ctx, ctxsize, fs_data);
 	if (res)
 		return res;
 	return preload ? fscrypt_get_encryption_info(child): 0;

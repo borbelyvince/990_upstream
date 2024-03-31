@@ -1632,7 +1632,6 @@ static int f2fs_disable_checkpoint(struct f2fs_sb_info *sbi)
 		err = -EAGAIN;
 		goto restore_flag;
 	}
-#endif
 	ret = f2fs_destroy_checkpoint_cmd_control(sbi, false);
 	if (ret || err) {
 		err = ret ? ret: err;

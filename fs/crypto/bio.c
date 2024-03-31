@@ -89,7 +89,6 @@ int fscrypt_zeroout_range(const struct inode *inode, pgoff_t lblk,
 			err = -EIO;
 			goto errout;
 		}
-		fscrypt_set_bio(inode, bio, 0);
 		err = submit_bio_wait(bio);
 		if (err == 0 && bio->bi_status)
 			err = -EIO;
@@ -106,25 +105,3 @@ errout:
 	return err;
 }
 EXPORT_SYMBOL(fscrypt_zeroout_range);
-
-int fscrypt_disk_encrypted(const struct inode *inode)
-{
-	return __fscrypt_disk_encrypted(inode);
-}
-
-void fscrypt_set_bio(const struct inode *inode, struct bio *bio, u64 dun)
-{
-#ifdef CONFIG_CRYPTO_DISKCIPHER
-	if (__fscrypt_disk_encrypted(inode))
-		crypto_diskcipher_set(bio, inode->i_crypt_info->ci_dtfm, dun);
-#endif
-}
-
-void *fscrypt_get_diskcipher(const struct inode *inode)
-{
-#ifdef CONFIG_CRYPTO_DISKCIPHER
-	if (fscrypt_has_encryption_key(inode))
-		return inode->i_crypt_info->ci_dtfm;
-#endif
-	return NULL;
-}

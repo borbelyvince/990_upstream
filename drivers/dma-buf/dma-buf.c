@@ -517,7 +517,6 @@ struct dma_buf *dma_buf_export(const struct dma_buf_export_info *exp_info)
 	struct reservation_object *resv = exp_info->resv;
 	struct file *file;
 	size_t alloc_size = sizeof(struct dma_buf);
-	char filename[MAX_EXP_FILE_NAME];
 	int ret;
 
 	if (!exp_info->resv)

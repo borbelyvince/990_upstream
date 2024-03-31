@@ -30,13 +30,6 @@ else
 	 $(call cc-param,asan-instrument-allocas=1)
 endif
 
-# clang+kasan stack usage bug. Worked around with KASAN_THREAD_SHIFT.
-ifneq ($(CONFIG_FRAME_WARN),0)
-CFLAGS_KASAN += -Wno-error=frame-larger-than=
-endif
-
-ifdef CONFIG_KASAN_EXTRA
-CFLAGS_KASAN += $(call cc-option, -fsanitize-address-use-after-scope)
 endif # CONFIG_KASAN_GENERIC
 
 ifdef CONFIG_KASAN_SW_TAGS
@@ -53,6 +46,7 @@ CFLAGS_KASAN := -fsanitize=kernel-hwaddress \
 
 endif # CONFIG_KASAN_SW_TAGS
 
-ifdef CONFIG_KASAN
-CFLAGS_KASAN_NOSANITIZE := -fno-builtin
+# clang+kasan stack usage bug. Worked around with KASAN_THREAD_SHIFT.
+ifneq ($(CONFIG_FRAME_WARN),0)
+CFLAGS_KASAN += -Wno-error=frame-larger-than=
 endif
