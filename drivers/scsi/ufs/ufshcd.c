@@ -6212,8 +6212,8 @@ static int ufshcd_slave_configure(struct scsi_device *sdev)
 {
 	struct ufs_hba *hba = shost_priv(sdev->host);
 	struct request_queue *q = sdev->request_queue;
+
 #if defined(CONFIG_UFSFEATURE)
-	struct ufs_hba *hba = shost_priv(sdev->host);
 	struct ufsf_feature *ufsf = &hba->ufsf;
 
 	if (ufsf_is_valid_lun(sdev->lun)) {
@@ -6349,7 +6349,6 @@ ufshcd_transfer_rsp_status(struct ufs_hba *hba, struct ufshcd_lrb *lrbp)
 
 	switch (ocs) {
 	case OCS_SUCCESS:
-	case OCS_FATAL_ERROR:
 		result = ufshcd_get_req_rsp(lrbp->ucd_rsp_ptr);
 		hba->ufs_stats.last_hibern8_exit_tstamp = ktime_set(0, 0);
 		switch (result) {
