@@ -38,29 +38,6 @@
 
 #include "internal.h"
 
-atomic_long_t nr_vmalloc_pages;
-
-static int vmalloc_size_notifier(struct notifier_block *nb,
-					unsigned long action, void *data)
-{
-	struct seq_file *s;
-
-	s = (struct seq_file *)data;
-	if (s != NULL)
-		seq_printf(s, "VmallocAPIsize: %8lu kB\n",
-			   atomic_long_read(&nr_vmalloc_pages)
-				 << (PAGE_SHIFT - 10));
-	else
-		pr_cont("VmallocAPIsize:%lukB ",
-			atomic_long_read(&nr_vmalloc_pages)
-				<< (PAGE_SHIFT - 10));
-	return 0;
-}
-
-static struct notifier_block vmalloc_size_nb = {
-	.notifier_call = vmalloc_size_notifier,
-};
-
 struct vfree_deferred {
 	struct llist_head list;
 	struct work_struct wq;
@@ -2786,6 +2763,27 @@ static const struct seq_operations vmalloc_op = {
 	.next = s_next,
 	.stop = s_stop,
 	.show = s_show,
+};
+
+static int vmalloc_size_notifier(struct notifier_block *nb,
+					unsigned long action, void *data)
+{
+	struct seq_file *s;
+
+	s = (struct seq_file *)data;
+	if (s != NULL)
+		seq_printf(s, "VmallocAPIsize: %8lu kB\n",
+			   atomic_long_read(&nr_vmalloc_pages)
+				 << (PAGE_SHIFT - 10));
+	else
+		pr_cont("VmallocAPIsize:%lukB ",
+			atomic_long_read(&nr_vmalloc_pages)
+				<< (PAGE_SHIFT - 10));
+	return 0;
+}
+
+static struct notifier_block vmalloc_size_nb = {
+	.notifier_call = vmalloc_size_notifier,
 };
 
 static int __init proc_vmalloc_init(void)

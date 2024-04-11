@@ -236,10 +236,6 @@ static inline bool fscrypt_valid_enc_modes(u32 contents_mode,
 	    filenames_mode == FSCRYPT_MODE_ADIANTUM)
 		return true;
 
-	if (contents_mode == FS_ENCRYPTION_MODE_PRIVATE &&
-		filenames_mode == FS_ENCRYPTION_MODE_AES_256_CTS)
-		return true;
-
 	return false;
 }
 
@@ -284,7 +280,6 @@ extern int fname_encrypt(struct inode *inode, const struct qstr *iname,
 extern bool fscrypt_fname_encrypted_size(const struct inode *inode,
 					 u32 orig_len, u32 max_len,
 					 u32 *encrypted_len_ret);
-extern void fscrypt_free_bounce_page(void *pool);
 
 /* hkdf.c */
 
