@@ -1,3 +1,4 @@
+#define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 /*
  * Based on arch/arm/mm/mmu.c
  *
@@ -668,6 +669,36 @@ void __init paging_init(void)
 	set_memsize_kernel_type(MEMSIZE_KERNEL_OTHERS);
 }
 
+#ifdef CONFIG_MEMORY_HOTPLUG
+/*
+ * hotplug_paging() is used by memory hotplug to build new page tables
+ * for hot added memory.
+ */
+void hotplug_paging(phys_addr_t start, phys_addr_t size)
+{
+
+	struct page *pg;
+	phys_addr_t pgd_phys = pgd_pgtable_alloc();
+	pgd_t *pgd = pgd_set_fixmap(pgd_phys);
+
+	memcpy(pgd, swapper_pg_dir, PAGE_SIZE);
+
+	__create_pgd_mapping(pgd, start, __phys_to_virt(start), size,
+		PAGE_KERNEL, pgd_pgtable_alloc, !debug_pagealloc_enabled());
+
+	cpu_replace_ttbr1(__va(pgd_phys));
+	memcpy(swapper_pg_dir, pgd, PAGE_SIZE);
+	cpu_replace_ttbr1(swapper_pg_dir);
+
+	pgd_clear_fixmap();
+
+	pg = phys_to_page(pgd_phys);
+	pgtable_page_dtor(pg);
+	__free_pages(pg, 0);
+}
+
+#endif
+
 /*
  * Check whether a kernel address is valid (derived from arch/x86/).
  */
@@ -864,7 +895,7 @@ remove_pud_table(pgd_t *pgdp, unsigned long addr,
 	}
 }
 
-static void
+void
 remove_pagetable(unsigned long start, unsigned long end, bool sparse_vmap)
 {
 	unsigned long addr, next;
@@ -1226,44 +1257,3 @@ int pud_free_pmd_page(pud_t *pudp, unsigned long addr)
 	pmd_free(NULL, table);
 	return 1;
 }
-
-#ifdef CONFIG_MEMORY_HOTPLUG
-static void __remove_pgd_mapping(pgd_t *pgdir, unsigned long start, u64 size)
-{
-	WARN_ON(pgdir != init_mm.pgd);
-	remove_pagetable(start, start + size, false);
-}
-
-int arch_add_memory(int nid, u64 start, u64 size, struct vmem_altmap *altmap,
-		    bool want_memblock)
-{
-	int ret, flags = 0;
-
-	if (debug_pagealloc_enabled())
-		flags = NO_BLOCK_MAPPINGS | NO_CONT_MAPPINGS;
-
-	__create_pgd_mapping(swapper_pg_dir, start, __phys_to_virt(start),
-			     size, PAGE_KERNEL, pgd_pgtable_alloc, flags);
-
-	ret = __add_pages(nid, start >> PAGE_SHIFT, size >> PAGE_SHIFT,
-			   altmap, want_memblock);
-	if (ret)
-		__remove_pgd_mapping(swapper_pg_dir,
-				     __phys_to_virt(start), size);
-	return ret;
-}
-
-#ifdef CONFIG_MEMORY_HOTREMOVE
-int arch_remove_memory(u64 start, u64 size, struct vmem_altmap *altmap)
-{
-	unsigned long start_pfn = start >> PAGE_SHIFT;
-	unsigned long nr_pages = size >> PAGE_SHIFT;
-	struct zone *zone = page_zone(pfn_to_page(start_pfn));
-
-	__remove_pages(zone, start_pfn, nr_pages, altmap);
-	__remove_pgd_mapping(swapper_pg_dir, __phys_to_virt(start), size);
-
-	return 0;
-}
-#endif
-#endif
