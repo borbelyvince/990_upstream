@@ -173,9 +173,6 @@ struct bio {
 
 	void			*bi_private;
 	void			*bi_aux_private;
-#ifdef CONFIG_CRYPTO_DISKCIPHER
-	 int bi_crypt_skip;
-#endif
 #ifdef CONFIG_BLK_CGROUP
 	/*
 	 * Optional ioc and css associated with this bio.  Put on bio
