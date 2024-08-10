@@ -1238,7 +1238,7 @@ static int exynos_ufs_crypto_engine_cfg(struct ufs_hba *hba,
 
 	scsi_for_each_sg(lrbp->cmd, sg, sg_segments, idx) {
 		ret = exynos_fmp_crypt_cfg(bio,
-			(void *)&lrbp->ucd_prdt_ptr[idx], idx, sector_offset);
+			(void *)&lrbp->ucd_prdt_ptr[idx], idx, sector_offset, false);
 		sector_offset += 8; /* UFSHCI_SECTOR_SIZE / MIN_SECTOR_SIZE */
 		if (ret)
 			return ret;
