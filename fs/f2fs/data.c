@@ -508,6 +508,7 @@ int f2fs_submit_page_bio(struct f2fs_io_info *fio)
 	struct bio *bio;
 	struct page *page = fio->encrypted_page ?
 			fio->encrypted_page : fio->page;
+	struct inode *inode = fio->page->mapping->host;
 
 	if (!f2fs_is_valid_blkaddr(fio->sbi, fio->new_blkaddr,
 			__is_meta_io(fio) ? META_GENERIC : DATA_GENERIC))
@@ -550,6 +551,7 @@ void f2fs_submit_page_write(struct f2fs_io_info *fio)
 	enum page_type btype = PAGE_TYPE_OF_BIO(fio->type);
 	struct f2fs_bio_info *io = sbi->write_io[btype] + fio->temp;
 	struct page *bio_page;
+	struct inode *inode;
 
 	f2fs_bug_on(sbi, is_read_io(fio->op));
 
@@ -600,7 +602,6 @@ alloc_new:
 		__submit_merged_bio(io);
 		goto alloc_new;
 	}
-
 
 #ifdef CONFIG_FS_HPB
 	if(is_inode_flag_set(inode, FI_HPB_INODE)) {
@@ -656,15 +657,15 @@ static struct bio *f2fs_grab_read_bio(struct inode *inode, block_t blkaddr,
 		bio->bi_private = ctx;
 	}
 
-	return bio;
-}
-
-
 #ifdef CONFIG_FS_HPB
 	if(is_inode_flag_set(inode, FI_HPB_INODE)) {
 		bio->bi_opf |= REQ_HPB_PREFER;
 	}
 #endif
+
+	return bio;
+}
+
 
 /* This can handle encryption stuffs */
 static int f2fs_submit_page_read(struct inode *inode, struct page *page,
@@ -2740,6 +2741,7 @@ static ssize_t f2fs_direct_IO(struct kiocb *iocb, struct iov_iter *iter)
 	enum rw_hint hint = iocb->ki_hint;
 	int whint_mode = F2FS_OPTION(sbi).whint_mode;
 	bool do_opu;
+	int dio_flags = DIO_LOCKING | DIO_SKIP_HOLES;
 
 	err = check_direct_IO(inode, iter, offset);
 	if (err)

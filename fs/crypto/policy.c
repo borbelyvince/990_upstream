@@ -320,7 +320,6 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 
 	if (get_user(policy.version, (const u8 __user *)arg))
 		return -EFAULT;
-	}
 
 	size = fscrypt_policy_size(&policy);
 	if (size <= 0)
@@ -344,7 +343,6 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 
 	if (!inode_owner_or_capable(inode))
 		return -EACCES;
-	}
 
 	ret = mnt_want_write_file(filp);
 	if (ret)
@@ -372,8 +370,6 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	inode_unlock(inode);
 
 	mnt_drop_write_file(filp);
-	pr_info("fscrypt_ioctl_set_policy : %s(%d)\n",
-			(filp ?(char *)filp->f_path.dentry->d_name.name : (char *)"Unknown"), ret);
 	return ret;
 }
 EXPORT_SYMBOL(fscrypt_ioctl_set_policy);

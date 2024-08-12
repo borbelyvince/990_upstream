@@ -183,6 +183,9 @@ struct fscrypt_info {
 	 */
 	struct fscrypt_mode *ci_mode;
 
+	/* Back-pointer to the inode */
+	struct inode *ci_inode;
+
 	/*
 	 * The master key with which this inode was unlocked (decrypted).  This
 	 * will be NULL if the master key was found in a process-subscribed

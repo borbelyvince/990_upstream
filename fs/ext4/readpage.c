@@ -88,14 +88,14 @@ static void mpage_end_io(struct bio *bio)
 	if (trace_android_fs_dataread_start_enabled())
 		ext4_trace_read_completion(bio);
 
-	if (ext4_bio_encrypted(bio)) {
+	/*if (ext4_bio_encrypted(bio)) {
 		if (bio->bi_status) {
 			fscrypt_release_ctx(bio->bi_private);
 		} else {
 			fscrypt_enqueue_decrypt_bio(bio->bi_private, bio);
 			return;
 		}
-	}
+	}*/
 	bio_for_each_segment_all(bv, bio, i) {
 		struct page *page = bv->bv_page;
 
@@ -289,15 +289,15 @@ int ext4_mpage_readpages(struct address_space *mapping,
 			struct fscrypt_ctx *ctx = NULL;
 
 			if (IS_ENCRYPTED(inode) && S_ISREG(inode->i_mode)) {
-				ctx = fscrypt_get_ctx(GFP_NOFS);
+				ctx = 0; //fscrypt_get_ctx(GFP_NOFS);
 				if (IS_ERR(ctx))
 					goto set_error_page;
 			}
 			bio = bio_alloc(GFP_KERNEL,
 				min_t(int, nr_pages, BIO_MAX_PAGES));
 			if (!bio) {
-				if (ctx)
-					fscrypt_release_ctx(ctx);
+				//if (ctx)
+					//fscrypt_release_ctx(ctx);
 				goto set_error_page;
 			}
 			bio_set_dev(bio, bdev);
