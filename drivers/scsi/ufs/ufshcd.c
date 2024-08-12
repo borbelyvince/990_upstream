@@ -11026,7 +11026,7 @@ int ufshcd_init(struct ufs_hba *hba, void __iomem *mmio_base, unsigned int irq)
 	err = ufshcd_hba_init_crypto(hba);
 	if (err) {
 		dev_err(hba->dev, "crypto setup failed\n");
-		goto out_remove_scsi_host;
+		goto exit_gating;
 	}
 
 #if defined(CONFIG_PM_DEVFREQ)

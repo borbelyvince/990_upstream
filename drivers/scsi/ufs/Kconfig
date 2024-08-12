@@ -222,6 +222,7 @@ config HPB_RELEASE_CHECK
 
 config SCSI_UFS_CRYPTO
 	bool "UFS Crypto Engine Support"
+	default y
 	depends on SCSI_UFSHCD && BLK_INLINE_ENCRYPTION
 	help
 	  Enable Crypto Engine Support in UFS.
