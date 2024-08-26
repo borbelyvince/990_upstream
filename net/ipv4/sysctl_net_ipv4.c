@@ -481,6 +481,7 @@ static struct ctl_table ipv4_table[] = {
 		.mode		= 0644,
 		.proc_handler	= proc_dointvec
 	},
+
 #ifdef CONFIG_NETLABEL
 	{
 		.procname	= "cipso_cache_enable",
