@@ -10,6 +10,15 @@
 
 #ifdef CONFIG_BLK_INLINE_ENCRYPTION
 
+/* Inline crypto feature bits.  Must set at least one. */
+enum {
+	/* Support for standard software-specified keys */
+	BLK_CRYPTO_FEATURE_STANDARD_KEYS = BIT(0),
+
+	/* Support for hardware-wrapped keys */
+	BLK_CRYPTO_FEATURE_WRAPPED_KEYS = BIT(1),
+};
+
 struct keyslot_manager;
 
 /**
