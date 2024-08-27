@@ -370,6 +370,8 @@ int fscrypt_ioctl_set_policy(struct file *filp, const void __user *arg)
 	inode_unlock(inode);
 
 	mnt_drop_write_file(filp);
+	pr_info("fscrypt_ioctl_set_policy : %s(%d)\n",
+			(filp ?(char *)filp->f_path.dentry->d_name.name : (char *)"Unknown"), ret);
 	return ret;
 }
 EXPORT_SYMBOL(fscrypt_ioctl_set_policy);
