@@ -818,6 +818,7 @@ static int get_checkpoint_version(struct f2fs_sb_info *sbi, block_t cp_addr,
 		unsigned long long *version)
 {
 	size_t crc_offset = 0;
+	unsigned long blk_size = sbi->blocksize;
 	__u32 crc;
 
 	*cp_page = f2fs_get_meta_page(sbi, cp_addr);

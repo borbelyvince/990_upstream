@@ -242,15 +242,13 @@ void f2fs_set_sb_extra_flag(struct f2fs_sb_info *sbi, int flag)
 	if (extra_flag_blk_no < 2) {
 		// 0 -> SB 0, 1 -> SB 1, 
 		// 2 or more : RSVD
-		f2fs_msg(sbi->sb, KERN_WARNING, 
-				"extra_flag: No free blks for extra flags");
+		f2fs_warn(sbi, "extra_flag: No free blks for extra flags");
 		return;
 	}
 
 	bh = sb_bread(sbi->sb, (sector_t)extra_flag_blk_no);
 	if(!bh) {
-		f2fs_msg(sbi->sb, KERN_WARNING, 
-				"extra_flag: Fail to allocate buffer_head");
+		f2fs_warn(sbi, "extra_flag: Fail to allocate buffer_head");
 		return;
 	}
 
@@ -266,8 +264,7 @@ void f2fs_set_sb_extra_flag(struct f2fs_sb_info *sbi, int flag)
 		extra_blk->need_fsck = cpu_to_le32(F2FS_SEC_EXTRA_FSCK_MAGIC);
 		break;
 	default:
-		f2fs_msg(sbi->sb, KERN_WARNING, 
-				"extra_flag: Undefined flag - %x", flag);
+		f2fs_warn(sbi, "extra_flag: Undefined flag - %x", flag);
 		goto out_unlock;
 	}
 	
@@ -276,7 +273,7 @@ void f2fs_set_sb_extra_flag(struct f2fs_sb_info *sbi, int flag)
 	unlock_buffer(bh);
 
 	if (__sync_dirty_buffer(bh, REQ_SYNC | REQ_FUA))
-		f2fs_msg(sbi->sb, KERN_WARNING, "extra_flag: EIO");
+		f2fs_warn(sbi, "extra_flag: EIO");
 
 	brelse(bh);
 
@@ -298,15 +295,13 @@ void f2fs_get_fsck_stat(struct f2fs_sb_info *sbi)
 	struct f2fs_sb_extra_flag_blk *extra_blk;
 
 	if (extra_flag_blk_no < 2) {
-		f2fs_msg(sbi->sb, KERN_WARNING, 
-				"extra_flag: No free blks for extra flags");
+		f2fs_warn(sbi, "extra_flag: No free blks for extra flags");
 		return;
 	}
 
 	bh = sb_bread(sbi->sb, (sector_t)extra_flag_blk_no);
 	if (!bh) {
-		f2fs_msg(sbi->sb, KERN_WARNING, 
-				"extra_flag: Fail to allocate buffer_head");
+		f2fs_warn(sbi, "extra_flag: Fail to allocate buffer_head");
 		return;
 	}
 
@@ -690,8 +685,7 @@ static int parse_options(struct super_block *sb, char *options)
 				return -EINVAL;
 			gid = make_kgid(current_user_ns(), arg);
 			if (!gid_valid(gid)) {
-				f2fs_msg(sb, KERN_ERR,
-					"Invalid gid value %d", arg);
+				f2fs_err(sbi, "Invalid gid value %d", arg);
 				return -EINVAL;
 			}
 			F2FS_OPTION(sbi).flush_group = gid;
@@ -936,7 +930,7 @@ static int parse_options(struct super_block *sb, char *options)
 			if (args->from && match_int(args, &arg))
 				return -EINVAL;
 			if (arg < 0 || arg > 7) {
-				f2fs_msg(sb, KERN_ERR, "Invalid checkpoint task"
+				f2fs_err(sbi, "Invalid checkpoint task"
 					       " IO priority (must be 0-7)");
 				return -EINVAL;
 			}
@@ -1673,8 +1667,7 @@ static void default_options(struct f2fs_sb_info *sbi, bool remount)
 			return;
 		err = parse_options(sb, mount_opts);
 		if (err)
-			f2fs_msg(sb, KERN_WARNING,
-				"failed to parse options in superblock\n");
+			f2fs_warn(sbi, "failed to parse options in superblock\n");
 		kfree(mount_opts);
 	}
 }
@@ -1713,8 +1706,7 @@ static int f2fs_disable_checkpoint(struct f2fs_sb_info *sbi)
 	}
 
 	if (err == -EAGAIN) {
-		f2fs_msg(sbi->sb, KERN_INFO, 
-				"%s: f2fs_gc = -EAGAIN (retry_cnt : %u)", 
+		f2fs_info(sbi, "%s: f2fs_gc = -EAGAIN (retry_cnt : %u)", 
 				__func__, retry_cnt);
 		err = 0;
 	}
@@ -1768,8 +1760,7 @@ static void f2fs_enable_checkpoint(struct f2fs_sb_info *sbi)
 	mutex_unlock(&sbi->gc_mutex);
 
 	if (f2fs_create_checkpoint_cmd_control(sbi)) {
-		f2fs_msg(sbi->sb, KERN_WARNING,
-			"Failed to initialize F2FS issue_checkpoint_thread");
+		f2fs_warn(sbi, "Failed to initialize F2FS issue_checkpoint_thread");
 	}
 
 	f2fs_sync_fs(sbi->sb, 1);
@@ -1946,7 +1937,7 @@ skip:
 
 	limit_reserve_root(sbi);
 	*flags = (*flags & ~SB_LAZYTIME) | (sb->s_flags & SB_LAZYTIME);
-	f2fs_msg(sb, KERN_NOTICE, "re-mounted. Opts: %s", data);
+	f2fs_notice(sbi, "re-mounted. Opts: %s", data);
 
 	return 0;
 restore_gc:
@@ -3650,8 +3641,7 @@ try_onemore:
 	/* setup checkpoint_cmd_control */
 	err = f2fs_create_checkpoint_cmd_control(sbi);
 	if (err) {
-		f2fs_msg(sb, KERN_ERR,
-			"Failed to initialize F2FS checkpoint_cmd_control");
+		f2fs_err(sbi, "Failed to initialize F2FS checkpoint_cmd_control");
 		goto free_ccc;
 	}
 

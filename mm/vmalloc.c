@@ -38,7 +38,7 @@
 
 #include "internal.h"
 
-atomic_long_t nr_vmalloc_pages;
+static atomic_long_t nr_vmalloc_pages;
 
 static int vmalloc_size_notifier(struct notifier_block *nb,
 					unsigned long action, void *data)
@@ -369,8 +369,6 @@ static unsigned long cached_vstart;
 static unsigned long cached_align;
 
 static unsigned long vmap_area_pcpu_hole;
-
-static atomic_long_t nr_vmalloc_pages;
 
 unsigned long vmalloc_nr_pages(void)
 {

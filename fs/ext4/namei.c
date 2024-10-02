@@ -36,6 +36,7 @@
 #include <linux/bio.h>
 #include <linux/iversion.h>
 #include <linux/unicode.h>
+#include <linux/fs_hpb.h>
 #include "ext4.h"
 #include "ext4_jbd2.h"
 
