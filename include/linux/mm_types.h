@@ -361,7 +361,6 @@ struct mm_struct {
 		rwlock_t mm_rb_lock;	/* Speculative page fault field */
 #endif
 		u64 vmacache_seqnum;                   /* per-thread vmacache */
-
 #ifdef CONFIG_MMU
 		unsigned long (*get_unmapped_area) (struct file *filp,
 				unsigned long addr, unsigned long len,
